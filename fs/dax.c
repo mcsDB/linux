@@ -1393,6 +1393,7 @@ static vm_fault_t dax_fault_iter(struct vm_fault *vmf,
 	    (iomap->type == IOMAP_UNWRITTEN || iomap->type == IOMAP_HOLE)) {
 		if (!pmd)
 			return dax_load_hole(xas, mapping, entry, vmf);
+		goto actual_fault;
 		return dax_pmd_load_hole(xas, vmf, iomap, entry);
 	}
 
@@ -1401,6 +1402,7 @@ static vm_fault_t dax_fault_iter(struct vm_fault *vmf,
 		return pmd ? VM_FAULT_FALLBACK : VM_FAULT_SIGBUS;
 	}
 
+actual_fault:
 	err = dax_iomap_pfn(&iter->iomap, pos, size, &pfn);
 	if (err)
 		return pmd ? VM_FAULT_FALLBACK : dax_fault_return(err);
@@ -1413,7 +1415,7 @@ static vm_fault_t dax_fault_iter(struct vm_fault *vmf,
 
 	/* insert PMD pfn */
 	if (pmd)
-		return vmf_insert_pfn_pmd(vmf, pfn, write);
+		return vmf_insert_pfn_pmd(vmf, pfn, true);
 
 	/* insert PTE pfn */
 	if (write)
