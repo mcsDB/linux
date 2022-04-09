@@ -692,12 +692,10 @@ static vm_fault_t ext4_dax_huge_fault(struct vm_fault *vmf,
 	struct inode *inode = file_inode(vmf->vma->vm_file);
 	struct super_block *sb = inode->i_sb;
 
-	if ((vmf->vma->vm_flags & VM_ZEROOUT) &&
-	    (vmf->vma->vm_flags & VM_WRITE) &&
-	    (vmf->vma->vm_flags & VM_SHARED)) {
+	if ((vmf->vma->vm_flags & VM_ZEROOUT) && (vmf->vma->vm_flags & VM_WRITE) && (vmf->vma->vm_flags & VM_SHARED)) {
 	        vmf->flags |= FAULT_FLAG_WRITE;
 	}
-
+	
 	/*
 	 * We have to distinguish real writes from writes which will result in a
 	 * COW page; COW writes should *not* poke the journal (the file will not
@@ -788,7 +786,7 @@ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
 	file_accessed(file);
 	if (IS_DAX(file_inode(file))) {
 		vma->vm_ops = &ext4_dax_vm_ops;
-		vma->vm_flags |= VM_HUGEPAGE;
+		vma->vm_flags |= VM_HUGEPAGE;		
 	} else {
 		vma->vm_ops = &ext4_file_vm_ops;
 	}

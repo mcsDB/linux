@@ -679,7 +679,7 @@ found:
 		if (flags & EXT4_GET_BLOCKS_ZERO &&
 		    map->m_flags & EXT4_MAP_MAPPED &&
 		    map->m_flags & EXT4_MAP_NEW &&
-		    !(flags & EXT4_PREZEROOUT)) {
+		    !(flags & EXT4_DONT_ZEROOUT)) {
 			ret = ext4_issue_zeroout(inode, map->m_lblk,
 						 map->m_pblk, map->m_len);
 			if (ret) {
@@ -3352,9 +3352,6 @@ retry:
 	WARN_ON(!IS_DAX(inode) && !(flags & IOMAP_DIRECT));
 	if (IS_DAX(inode))
 		m_flags = EXT4_GET_BLOCKS_CREATE_ZERO;
-	if (flags == IOMAP_ZEROOUT)
-		m_flags |= EXT4_PREZEROOUT;
-
 	/*
 	 * We use i_size instead of i_disksize here because delalloc writeback
 	 * can complete at any point during the I/O and subsequently push the
@@ -3365,6 +3362,10 @@ retry:
 		m_flags = EXT4_GET_BLOCKS_CREATE;
 	else if (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
 		m_flags = EXT4_GET_BLOCKS_IO_CREATE_EXT;
+
+	if (flags & IOMAP_ZEROOUT) {
+		m_flags |= EXT4_DONT_ZEROOUT;
+	}
 
 	ret = ext4_map_blocks(handle, inode, map, m_flags);
 

@@ -1393,7 +1393,6 @@ static vm_fault_t dax_fault_iter(struct vm_fault *vmf,
 	    (iomap->type == IOMAP_UNWRITTEN || iomap->type == IOMAP_HOLE)) {
 		if (!pmd)
 			return dax_load_hole(xas, mapping, entry, vmf);
-		goto actual_fault;
 		return dax_pmd_load_hole(xas, vmf, iomap, entry);
 	}
 
@@ -1402,7 +1401,6 @@ static vm_fault_t dax_fault_iter(struct vm_fault *vmf,
 		return pmd ? VM_FAULT_FALLBACK : VM_FAULT_SIGBUS;
 	}
 
-actual_fault:
 	err = dax_iomap_pfn(&iter->iomap, pos, size, &pfn);
 	if (err)
 		return pmd ? VM_FAULT_FALLBACK : dax_fault_return(err);
@@ -1415,7 +1413,7 @@ actual_fault:
 
 	/* insert PMD pfn */
 	if (pmd)
-		return vmf_insert_pfn_pmd(vmf, pfn, true);
+		return vmf_insert_pfn_pmd(vmf, pfn, write);
 
 	/* insert PTE pfn */
 	if (write)
@@ -1550,6 +1548,8 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
 
 	if (vmf->flags & FAULT_FLAG_WRITE)
 		iter.flags |= IOMAP_WRITE;
+	if (vmf->vma->vm_flags & VM_ZEROOUT)
+		iter.flags |= IOMAP_ZEROOUT;
 
 	/*
 	 * Check whether offset isn't beyond end of file now. Caller is
