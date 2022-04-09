@@ -3350,10 +3350,9 @@ retry:
 	 * supported with IOMAP_WRITE.
 	 */
 	WARN_ON(!IS_DAX(inode) && !(flags & IOMAP_DIRECT));
-	if (IS_DAX(inode))
+	if (IS_DAX(inode)) {
 		m_flags = EXT4_GET_BLOCKS_CREATE_ZERO;
-	if (flags == IOMAP_ZEROOUT)
-		m_flags |= EXT4_PREZEROOUT;
+	}
 
 	/*
 	 * We use i_size instead of i_disksize here because delalloc writeback
@@ -3365,6 +3364,11 @@ retry:
 		m_flags = EXT4_GET_BLOCKS_CREATE;
 	else if (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
 		m_flags = EXT4_GET_BLOCKS_IO_CREATE_EXT;
+
+	if (IS_DAX(inode)) {
+		if (flags & IOMAP_ZEROOUT)
+			m_flags |= EXT4_PREZEROOUT;
+	}
 
 	ret = ext4_map_blocks(handle, inode, map, m_flags);
 
